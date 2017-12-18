@@ -15,11 +15,8 @@
  */
 package com.profesorfalken.wmi4java;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -40,20 +37,47 @@ class WMIVBScript implements WMIStub {
     private static String executeScript(String scriptCode) throws WMIException {
         String scriptResponse = "";
         File tmpFile = null;
+        File tmpFileOutput = null;
         FileWriter writer = null;
         BufferedReader errorOutput = null;
+        StringBuilder prefixScriptCode = new StringBuilder(200);
+        String suffixScriptCode = "";
 
         try {
             tmpFile = File.createTempFile("wmi4java" + new Date().getTime(), ".vbs");
+            tmpFileOutput = File.createTempFile("wmi4java" + new Date().getTime(), ".out.txt");
+            String tmpFileOutputPath = tmpFileOutput.getAbsolutePath();
+
+            prefixScriptCode.append("Sub Save2File (sText)").append(CRLF)
+                    .append("Dim oStream").append(CRLF)
+                    .append("Set oStream = CreateObject(\"ADODB.Stream\")").append(CRLF)
+                    .append("With oStream").append(CRLF)
+                    .append(".Open").append(CRLF)
+                    .append(".CharSet = \"")
+                    .append(Charset.defaultCharset().name())
+                    .append("\"").append(CRLF)
+                    .append(".WriteText sText").append(CRLF)
+                    .append(".SaveToFile \"")
+                    .append(tmpFileOutputPath)
+                    .append("\", 2").append(CRLF)
+                    .append("End With").append(CRLF)
+                    .append("Set oStream = Nothing").append(CRLF)
+                    .append("End Sub").append(CRLF).append(CRLF)
+                    .append("output = \"\"").append(CRLF).append(CRLF);
+
+            suffixScriptCode = CRLF + "Save2File output";
+
+            System.out.println(prefixScriptCode.toString() + scriptCode + suffixScriptCode);
+
             writer = new FileWriter(tmpFile);
-            writer.write(scriptCode);
+            writer.write(prefixScriptCode.toString() + scriptCode + suffixScriptCode);
             writer.flush();
             writer.close();
 
             Process process = Runtime.getRuntime().exec(
                     new String[]{"cmd.exe", "/C", "cscript.exe", "/NoLogo", tmpFile.getAbsolutePath()});
             BufferedReader processOutput
-                    = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    = new BufferedReader(new FileReader(tmpFileOutputPath));
             String line;
             while ((line = processOutput.readLine()) != null) {
                 if (!line.isEmpty()) {
@@ -86,6 +110,9 @@ class WMIVBScript implements WMIStub {
                 if (tmpFile != null) {
                     tmpFile.delete();
                 }
+                if (tmpFileOutput != null) {
+                    tmpFileOutput.delete();
+                }
                 if (errorOutput != null) {
                     errorOutput.close();
                 }
@@ -113,7 +140,7 @@ class WMIVBScript implements WMIStub {
 
             scriptCode.append("For Each objClass in colClasses").append(CRLF);
             scriptCode.append("For Each objClassQualifier In objClass.Qualifiers_").append(CRLF);
-            scriptCode.append("WScript.Echo objClass.Path_.Class").append(CRLF);
+            scriptCode.append("output = output & objClass.Path_.Class & vbCrLf").append(CRLF);
             scriptCode.append("Next").append(CRLF);
             scriptCode.append("Next").append(CRLF);
 
@@ -137,7 +164,7 @@ class WMIVBScript implements WMIStub {
                     .append(wmiClass).append("\")").append(CRLF);
 
             scriptCode.append("For Each objClassProperty In objWMIService.Properties_").append(CRLF);
-            scriptCode.append("WScript.Echo objClassProperty.Name").append(CRLF);
+            scriptCode.append("output = output & objClassProperty.Name & vbCrLf").append(CRLF);
             scriptCode.append("Next").append(CRLF);
 
             return executeScript(scriptCode.toString());
@@ -180,12 +207,13 @@ class WMIVBScript implements WMIStub {
             scriptCode.append("For Each element In wmiQueryData").append(CRLF);
             for (final String wmiProperty : usedWMIProperties) {
             	if (!wmiProperty.equals("ConfigOptions")) {
-	                scriptCode.append("Wscript.Echo \"").append(wmiProperty)
-	                        .append(": \" & ").append("element.").append(wmiProperty).append(CRLF);
+	                scriptCode.append("output = output & \"").append(wmiProperty)
+	                        .append(": \" & ").append("element.").append(wmiProperty).append(" & vbCrLf").append(CRLF);
             	} else {
             		//Fix for ConfigOptions that is a Variant Array
-            		scriptCode.append("Wscript.Echo \"").append(wmiProperty)
-                    .append(": \" & ").append("Join(element.").append(wmiProperty).append(", \"|\")").append(CRLF);
+            		scriptCode.append("output = output & \"").append(wmiProperty)
+                    .append(": \" & ").append("Join(element.").append(wmiProperty)
+                            .append(", \"|\")").append(" & vbCrLf").append(CRLF);
             	}
             }
             scriptCode.append("Next").append(CRLF);
