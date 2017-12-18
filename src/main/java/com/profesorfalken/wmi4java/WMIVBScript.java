@@ -76,6 +76,8 @@ class WMIVBScript implements WMIStub {
             Process process = Runtime.getRuntime().exec(
                     new String[]{"cmd.exe", "/C", "cscript.exe", "/NoLogo", tmpFile.getAbsolutePath()});
 
+            process.waitFor();
+
             tmpFileOutput = new File(tmpFileOutputPath);
 
             BufferedReader processOutput
