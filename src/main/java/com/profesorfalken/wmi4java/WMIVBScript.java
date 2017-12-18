@@ -47,6 +47,7 @@ class WMIVBScript implements WMIStub {
             tmpFile = File.createTempFile("wmi4java" + new Date().getTime(), ".vbs");
             tmpFileOutput = File.createTempFile("wmi4java" + new Date().getTime(), ".out.txt");
             String tmpFileOutputPath = tmpFileOutput.getAbsolutePath();
+            tmpFileOutput.delete();
 
             prefixScriptCode.append("Sub Save2File (sText)").append(CRLF)
                     .append("Dim oStream").append(CRLF)
@@ -67,8 +68,6 @@ class WMIVBScript implements WMIStub {
 
             suffixScriptCode = CRLF + "Save2File output";
 
-            System.out.println(prefixScriptCode.toString() + scriptCode + suffixScriptCode);
-
             writer = new FileWriter(tmpFile);
             writer.write(prefixScriptCode.toString() + scriptCode + suffixScriptCode);
             writer.flush();
@@ -76,6 +75,9 @@ class WMIVBScript implements WMIStub {
 
             Process process = Runtime.getRuntime().exec(
                     new String[]{"cmd.exe", "/C", "cscript.exe", "/NoLogo", tmpFile.getAbsolutePath()});
+
+            tmpFileOutput = new File(tmpFileOutputPath);
+
             BufferedReader processOutput
                     = new BufferedReader(new FileReader(tmpFileOutputPath));
             String line;
@@ -84,6 +86,8 @@ class WMIVBScript implements WMIStub {
                     scriptResponse += line + CRLF;
                 }
             }
+
+            processOutput.close();
 
             if (scriptResponse.isEmpty()) {
                 errorOutput
