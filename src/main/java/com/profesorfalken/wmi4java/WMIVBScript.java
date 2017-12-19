@@ -61,6 +61,9 @@ class WMIVBScript implements WMIStub {
                 }
             }
 
+            System.out.println("WMI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            System.out.println(scriptResponse);
+
             if (scriptResponse.isEmpty()) {
                 errorOutput
                         = new BufferedReader(new InputStreamReader(process.getInputStream()));
