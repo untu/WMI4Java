@@ -61,8 +61,8 @@ class WMIVBScript implements WMIStub {
                 }
             }
 
-            System.out.println("WMI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            System.out.println(scriptResponse);
+            Logger.getLogger(WMI4Java.class.getName()).log(Level.SEVERE, "WMI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            Logger.getLogger(WMI4Java.class.getName()).log(Level.SEVERE, scriptResponse);
 
             if (scriptResponse.isEmpty()) {
                 errorOutput
