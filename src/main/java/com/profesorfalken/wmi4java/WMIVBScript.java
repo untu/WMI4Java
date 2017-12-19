@@ -20,9 +20,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -59,7 +56,7 @@ class WMIVBScript implements WMIStub {
             Process process = Runtime.getRuntime().exec(
                     new String[]{"cmd.exe", "/C", "cscript.exe", "/U", "/NoLogo", tmpFile.getAbsolutePath()});
             BufferedReader processOutput
-                    = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-16"));
             String line;
             while ((line = processOutput.readLine()) != null) {
                 Logger.getLogger(WMI4Java.class.getName()).log(Level.SEVERE, "while");
@@ -74,7 +71,7 @@ class WMIVBScript implements WMIStub {
 
             if (scriptResponse.isEmpty()) {
                 errorOutput
-                        = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                        = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-16"));
                 String errorResponse = "";
                 while ((line = errorOutput.readLine()) != null) {
                     if (!line.isEmpty()) {
@@ -189,9 +186,7 @@ class WMIVBScript implements WMIStub {
             }
             scriptCode.append("\")").append(CRLF);
             scriptCode.append("For Each element In wmiQueryData").append(CRLF);
-            for (final String wmiProperty0 : usedWMIProperties) {
-                ByteBuffer bb = Charset.forName("utf-16").encode(CharBuffer.wrap(wmiProperty0));
-                String wmiProperty = Charset.forName("US-ASCII").decode(bb).toString();
+            for (final String wmiProperty : usedWMIProperties) {
             	if (!wmiProperty.equals("ConfigOptions")) {
 	                scriptCode.append("Wscript.Echo \"").append(wmiProperty)
 	                        .append(": \" & ").append("element.").append(wmiProperty).append(CRLF);
