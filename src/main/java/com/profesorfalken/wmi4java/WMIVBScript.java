@@ -56,7 +56,7 @@ class WMIVBScript implements WMIStub {
             Process process = Runtime.getRuntime().exec(
                     new String[]{"cmd.exe", "/C", "cscript.exe", "/U", "/NoLogo", tmpFile.getAbsolutePath()});
             BufferedReader processOutput
-                    = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-16"));
+                    = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-16LE"));
             String line;
             while ((line = processOutput.readLine()) != null) {
                 Logger.getLogger(WMI4Java.class.getName()).log(Level.SEVERE, "while");
