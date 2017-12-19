@@ -20,6 +20,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -186,7 +189,9 @@ class WMIVBScript implements WMIStub {
             }
             scriptCode.append("\")").append(CRLF);
             scriptCode.append("For Each element In wmiQueryData").append(CRLF);
-            for (final String wmiProperty : usedWMIProperties) {
+            for (final String wmiProperty0 : usedWMIProperties) {
+                ByteBuffer bb = Charset.forName("utf-16").encode(CharBuffer.wrap(wmiProperty0));
+                String wmiProperty = Charset.forName("US-ASCII").decode(bb).toString();
             	if (!wmiProperty.equals("ConfigOptions")) {
 	                scriptCode.append("Wscript.Echo \"").append(wmiProperty)
 	                        .append(": \" & ").append("element.").append(wmiProperty).append(CRLF);
